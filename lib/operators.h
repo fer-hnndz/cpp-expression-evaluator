@@ -1,4 +1,5 @@
 #ifndef H_OPERATORS
+#define H_OPERATORS
 
 #include <map>
 
@@ -22,7 +23,9 @@ public:
 
     short getOperatorPrecedence(char op)
     {
-        return operatorsPrecedence[op];
+        if (isValidOperator(op))
+            return operatorsPrecedence[op];
+        return -1;
     }
 
     bool isValidOperator(char op)
@@ -31,4 +34,4 @@ public:
     }
 };
 
-#endif;
+#endif

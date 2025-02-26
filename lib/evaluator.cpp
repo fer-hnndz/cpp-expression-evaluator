@@ -1,66 +1,118 @@
 #include <iostream>
-#include "operators.h"
 #include <vector>
 #include <stack>
+#include <print>
+
+#include "operators.h"
+#include "debug_logs.h"
 
 /**
  * Parses the specified expression and returns the result.
+ *
+ * @param expr The mathematical expression to parse.
+ * @param debug If true, enables debug messages for parsing.
+ *
+ * @return std::expected<float, std::string>
+ * - **Success (`float`)**: The computed result of the expression.
+ * - **Error (`std::string`)**: An error message describing the failure reason.
+ *
+ * @retval float The computed result if the expression is valid.
+ * @retval std::string An error message if parsing fails.
  */
-auto readExpression(std::string expr)
+std::expected<float, std::string> readExpression(std::string expr, bool debug)
 {
     int i = 0;
     OperatorsManager operatorsMgr;
 
-    std::vector<float> operands;
+    std::vector<std::string> operands;
     std::stack<char> operators;
 
-    std::string currentToken = "";
-    std::cout << "Length " << expr.length() << "\n";
+    std::string storedOperand = "";
+    std::print("Length {}\n", expr.length());
 
+    // Iterate over the expression
     for (int i = 0; i < expr.length(); i++)
     {
-        if (isdigit(expr.at(i)) || expr.at(i) == '.')
+        char currentToken = expr.at(i);
+
+        if (isdigit(currentToken) || currentToken == '.')
         {
-            currentToken += expr.at(i);
+            storedOperand += currentToken;
             continue;
         }
         else
         {
             // TODO: Add try catch
             // There is another type of token, such as a variable or operator.
-            if (!currentToken.empty())
+            if (!storedOperand.empty())
             {
-                operands.push_back(std::stof(currentToken));
-                currentToken = "";
+                operands.push_back(storedOperand);
+                storedOperand = "";
             }
         }
 
-        if (operatorsMgr.isValidOperator(expr.at(i)))
-            operators.push(expr.at(i));
+        if (operatorsMgr.isValidOperator(currentToken))
+        {
+            std::print("Before\n");
+            printPostfixExpression(operators, operands);
+
+            // If the operators stack is empty, we can push the current operator.
+            if (operators.empty())
+            {
+                operators.push(currentToken);
+                continue;
+            }
+
+            // If the operator is a `)`, remove all operators until the `(` is found.
+            if (currentToken == ')')
+            {
+                if (operators.empty())
+                    return std::unexpected("Invalid expression: No opening parenthesis found.");
+
+                while (operators.top() != '(')
+                {
+                    // Push the operator to the operands list. So we process it in a postfix manner.
+                    operands.push_back(std::string(1, operators.top()));
+                    operators.pop();
+                }
+
+                operators.pop(); // Remove the `(`.
+                // operators.pop(); // Remove also the operator after the `(`.
+                continue;
+            }
+
+            int currentPrecedence = operatorsMgr.getOperatorPrecedence(currentToken);
+            int stackPrecedence = operatorsMgr.getOperatorPrecedence(operators.top());
+
+            if (currentPrecedence >= stackPrecedence && stackPrecedence > 0)
+            {
+
+                char lastOperator = operators.top();
+                operators.pop();
+
+                // This is so we keep operate with this operator, but after the current operator has been operated with.
+                // (not the best explanation, ik.)
+
+                operands.push_back(std::string(1, lastOperator));
+                operators.push(currentToken);
+            }
+            else
+                operators.push(currentToken);
+
+            std::print("After\n");
+            printPostfixExpression(operators, operands);
+        }
     }
 
-    // Agrega el último número si quedó pendiente
-    if (!currentToken.empty())
-    {
-        operands.push_back(std::stof(currentToken));
-    }
+    // Add last number if it exists
+    if (!storedOperand.empty())
+        operands.push_back(storedOperand);
 
-    // Imprimir el vector de números
-    std::cout << "Operands: ";
-    for (float num : operands)
+    // Print operands list and operators stack if running in debug mode.
+    if (debug)
     {
-        std::cout << num << " ";
+        printPostfixExpression(operators, operands);
     }
-    std::cout << "\n";
-
-    // Imprimir la pila de operadores
-    std::cout << "Operators: ";
-    while (!operators.empty())
-    {
-        std::cout << operators.top() << " ";
-        operators.pop();
-    }
-    std::cout << "\n";
 
     return 0;
 }

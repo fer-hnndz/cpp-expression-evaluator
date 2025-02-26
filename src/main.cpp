@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <bits/stdc++.h>
+#include <print>
 
 #include "tags.h"
 #include "evaluator.cpp"
@@ -10,15 +11,15 @@ std::string parseInputs(int argc, char *argv[], bool &debug);
 int main(int argc, char *argv[])
 {
 
-    std::stack<char> operatorStack;
-
     bool debug = false;
+
+    std::stack<char> operatorStack;
     const std::string expr = parseInputs(argc, argv, debug);
 
     if (sizeof expr == 0)
         return 0;
 
-    int a = readExpression(expr);
+    auto a = readExpression(expr, debug);
     return 0;
 }
 
@@ -32,7 +33,8 @@ std::string parseInputs(int argc, char *argv[], bool &debug)
     // Check if user has enough arguments
     if (argc < 2)
     {
-        std::cout << HELP_MESSAGE << "\n";
+        std::print(HELP_MESSAGE);
+        std::print("\n");
         return "";
     }
 
