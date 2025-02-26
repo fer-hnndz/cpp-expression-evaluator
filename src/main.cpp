@@ -1,19 +1,24 @@
 #include <iostream>
 #include <string>
+#include <bits/stdc++.h>
 
-#include <tags.h>
+#include "tags.h"
+#include "evaluator.cpp"
 
 std::string parseInputs(int argc, char *argv[], bool &debug);
 
 int main(int argc, char *argv[])
 {
 
+    std::stack<char> operatorStack;
+
     bool debug = false;
     const std::string expr = parseInputs(argc, argv, debug);
 
-    std::cout << "Parsed Expression: " << expr << "\n";
-    std::cout << "Run in debug mode: " << debug << "\n";
+    if (sizeof expr == 0)
+        return 0;
 
+    int a = readExpression(expr);
     return 0;
 }
 
