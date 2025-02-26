@@ -6,6 +6,50 @@
 #include "operators.h"
 #include "debug_logs.h"
 
+std::expected<float, std::string> evaluateExpression(std::vector<std::string> operands, std::stack<char> operators)
+{
+
+    std::stack<float> evaluationStack;
+    OperatorsManager operatorsMgr;
+
+    // Add numbers to the evaluation stack until an operator in the operands is found.
+
+    for (int i = 0; i < operands.size(); i++)
+    {
+        std::string currentOperand = operands.at(i);
+
+        if (!operatorsMgr.isValidOperator(currentOperand.at(0)))
+        {
+            evaluationStack.push(std::stof(currentOperand));
+            continue;
+        }
+
+        float rightNum = evaluationStack.top();
+        evaluationStack.pop();
+        float leftNum = evaluationStack.top();
+        evaluationStack.pop();
+
+        float result = operatorsMgr.operate(leftNum, rightNum, currentOperand.at(0));
+        evaluationStack.push(result);
+    }
+
+    // Finished iterating over the operands (so we process any operator located there)
+    // Process now the operator stack
+    while (!operators.empty())
+    {
+        float rightNum = evaluationStack.top();
+        evaluationStack.pop();
+        float leftNum = evaluationStack.top();
+        evaluationStack.pop();
+
+        evaluationStack.push(operatorsMgr.operate(leftNum, rightNum, operators.top()));
+        operators.pop();
+    }
+
+    std::print("Result {}", evaluationStack.top());
+    return evaluationStack.top();
+}
+
 /**
  * Parses the specified expression and returns the result.
  *
@@ -53,8 +97,8 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug)
 
         if (operatorsMgr.isValidOperator(currentToken))
         {
-            std::print("Before\n");
-            printPostfixExpression(operators, operands);
+            // std::print("Before\n");
+            // printPostfixExpression(operators, operands);
 
             // If the operators stack is empty, we can push the current operator.
             if (operators.empty())
@@ -99,8 +143,9 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug)
             else
                 operators.push(currentToken);
 
-            std::print("After\n");
-            printPostfixExpression(operators, operands);
+            // std::print("After\n");
+
+            // printPostfixExpression(operators, operands);
         }
     }
 
@@ -113,6 +158,11 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug)
     {
         printPostfixExpression(operators, operands);
     }
+
+    std::print("Evaluating...");
+    auto r = evaluateExpression(operands, operators);
+
+    // print("Res {}", r);
 
     return 0;
 }

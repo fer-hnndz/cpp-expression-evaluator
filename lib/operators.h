@@ -2,6 +2,8 @@
 #define H_OPERATORS
 
 #include <map>
+#include <math.h>
+#include <expected>
 
 class OperatorsManager
 {
@@ -31,6 +33,27 @@ public:
     bool isValidOperator(char op)
     {
         return operatorsPrecedence.find(op) != operatorsPrecedence.end();
+    }
+
+    float operate(float left, float right, char op)
+    {
+        switch (op)
+        {
+        case '+':
+            return left + right;
+        case '-':
+            return left - right;
+        case '*':
+            return left * right;
+        case '/':
+            return left / right;
+        case '%':
+            return fmod(left, right);
+        case '^':
+            return powf(left, right);
+        }
+
+        // throw new error here
     }
 };
 
