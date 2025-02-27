@@ -117,6 +117,8 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug) {
   // Iterate over the expression
   for (int i = 0; i < expr.length(); i++) {
     char currentToken = expr.at(i);
+    if (currentToken == ' ')
+      continue;
 
     bool isValidAlphanumeric = (isalnum(currentToken) || currentToken == '.') &&
                                !operatorsMgr.isValidOperator(currentToken);
