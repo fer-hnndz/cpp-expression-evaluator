@@ -15,7 +15,8 @@ int main(int argc, char *argv[]) {
   std::stack<char> operatorStack;
   const std::string expr = parseInputs(argc, argv, debug);
 
-  if (sizeof expr == 0) return 0;
+  if (sizeof expr == 0)
+    return 0;
 
   auto a = readExpression(expr, debug);
   return 0;
@@ -41,7 +42,8 @@ std::string parseInputs(int argc, char *argv[], bool &debug) {
       return "";
     }
 
-    if (std::string(argv[i]) == "--debug") debug = true;
+    if (std::string(argv[i]) == "--debug")
+      debug = true;
   }
 
   return expr;

@@ -7,29 +7,45 @@
 #include "debug_logs.h"
 #include "operators.h"
 
-std::expected<float, std::string> evaluateExpression(
-    std::vector<std::string> operands, std::stack<char> operators) {
+std::expected<float, std::string>
+evaluateExpression(std::vector<std::string> terms, std::stack<char> operators) {
   std::stack<float> evaluationStack;
   OperatorsManager operatorsMgr;
 
   // Add numbers to the evaluation stack until an operator in the operands is
   // found.
 
-  for (int i = 0; i < operands.size(); i++) {
-    std::string currentOperand = operands.at(i);
+  for (int i = 0; i < terms.size(); i++) {
+    std::string currentTerm = terms.at(i);
 
-    if (!operatorsMgr.isValidOperator(currentOperand.at(0))) {
-      evaluationStack.push(std::stof(currentOperand));
+    bool isTerm = !operatorsMgr.isValidOperator(currentTerm.at(0)) &&
+                  (isalpha(currentTerm.at(0)) || isdigit(currentTerm.at(0)));
+
+    if (isTerm) {
+      if (isdigit(currentTerm.at(0))) {
+        evaluationStack.push(std::stof(currentTerm));
+        continue;
+      }
+
+      // Ask for the value of the variable.
+      std::print("Enter the value of the variable {}: ", currentTerm);
+      float *value = new float;
+      std::cin >> *value;
+
+      evaluationStack.push(*value);
+      delete value;
       continue;
     }
+
+    // Here we have detected an operation in the terms stack.
+    // Possibly from a parentheses term.
 
     float rightNum = evaluationStack.top();
     evaluationStack.pop();
     float leftNum = evaluationStack.top();
     evaluationStack.pop();
 
-    float result =
-        operatorsMgr.operate(leftNum, rightNum, currentOperand.at(0));
+    float result = operatorsMgr.operate(leftNum, rightNum, currentTerm.at(0));
     evaluationStack.push(result);
   }
 
@@ -70,7 +86,7 @@ void parenthesesToTerm(std::stack<char> &operators,
     operators.pop();
   }
 
-  operators.pop();  // Remove the `(`.
+  operators.pop(); // Remove the `(`.
 }
 
 /**
@@ -102,12 +118,6 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug) {
   for (int i = 0; i < expr.length(); i++) {
     char currentToken = expr.at(i);
 
-    // Process numbers and variables
-    // abc123
-    // a1
-    // hola
-    // 10.2
-
     bool isValidAlphanumeric = (isalnum(currentToken) || currentToken == '.') &&
                                !operatorsMgr.isValidOperator(currentToken);
 
@@ -131,7 +141,7 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug) {
         // Just append the value
         storedTerm += currentToken;
 
-      else {  // Is a number
+      else { // Is a number
 
         // Don't accept two dots (.) in a number.
         if (hasDotAlready && currentToken == '.')
@@ -143,7 +153,8 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug) {
           throw std::invalid_argument(
               "Invalid number format: Non-digit character found in number.");
 
-        if (currentToken == '.') hasDotAlready = true;
+        if (currentToken == '.')
+          hasDotAlready = true;
 
         storedTerm += currentToken;
       }
@@ -183,7 +194,7 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug) {
     int currentPrecedence = operatorsMgr.getOperatorPrecedence(currentToken);
     int stackPrecedence = operatorsMgr.getOperatorPrecedence(operators.top());
 
-    if (currentPrecedence <= stackPrecedence) {
+    if (currentPrecedence >= stackPrecedence && stackPrecedence > 0) {
       char lastOperator = operators.top();
       operators.pop();
 
@@ -198,10 +209,12 @@ std::expected<float, std::string> readExpression(std::string expr, bool debug) {
   }
 
   // Push the last term if it exists.
-  if (!storedTerm.empty()) terms.push_back(storedTerm);
+  if (!storedTerm.empty())
+    terms.push_back(storedTerm);
 
   // Print operands list and operators stack if running in debug mode.
-  if (debug) printPostfixExpression(operators, terms);
+  if (debug)
+    printPostfixExpression(operators, terms);
 
   auto r = evaluateExpression(terms, operators);
 
