@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/operate",
-            "args": ["10+(1+2)*2", "--debug"],
+            "args": ["(1/2)*base*4", "--debug"],
             "stopAtEntry": true,
             "cwd": "${fileDirname}",
             "environment": [],

@@ -1,53 +1,76 @@
 #include <iostream>
-#include <vector>
-#include <stack>
 #include <print>
+#include <stack>
+#include <stdexcept>
+#include <vector>
 
-#include "operators.h"
 #include "debug_logs.h"
+#include "operators.h"
 
-std::expected<float, std::string> evaluateExpression(std::vector<std::string> operands, std::stack<char> operators)
-{
+std::expected<float, std::string> evaluateExpression(
+    std::vector<std::string> operands, std::stack<char> operators) {
+  std::stack<float> evaluationStack;
+  OperatorsManager operatorsMgr;
 
-    std::stack<float> evaluationStack;
-    OperatorsManager operatorsMgr;
+  // Add numbers to the evaluation stack until an operator in the operands is
+  // found.
 
-    // Add numbers to the evaluation stack until an operator in the operands is found.
+  for (int i = 0; i < operands.size(); i++) {
+    std::string currentOperand = operands.at(i);
 
-    for (int i = 0; i < operands.size(); i++)
-    {
-        std::string currentOperand = operands.at(i);
-
-        if (!operatorsMgr.isValidOperator(currentOperand.at(0)))
-        {
-            evaluationStack.push(std::stof(currentOperand));
-            continue;
-        }
-
-        float rightNum = evaluationStack.top();
-        evaluationStack.pop();
-        float leftNum = evaluationStack.top();
-        evaluationStack.pop();
-
-        float result = operatorsMgr.operate(leftNum, rightNum, currentOperand.at(0));
-        evaluationStack.push(result);
+    if (!operatorsMgr.isValidOperator(currentOperand.at(0))) {
+      evaluationStack.push(std::stof(currentOperand));
+      continue;
     }
 
-    // Finished iterating over the operands (so we process any operator located there)
-    // Process now the operator stack
-    while (!operators.empty())
-    {
-        float rightNum = evaluationStack.top();
-        evaluationStack.pop();
-        float leftNum = evaluationStack.top();
-        evaluationStack.pop();
+    float rightNum = evaluationStack.top();
+    evaluationStack.pop();
+    float leftNum = evaluationStack.top();
+    evaluationStack.pop();
 
-        evaluationStack.push(operatorsMgr.operate(leftNum, rightNum, operators.top()));
-        operators.pop();
-    }
+    float result =
+        operatorsMgr.operate(leftNum, rightNum, currentOperand.at(0));
+    evaluationStack.push(result);
+  }
 
-    std::print("Result {}", evaluationStack.top());
-    return evaluationStack.top();
+  // Finished iterating over the operands (so we process any operator located
+  // there) Process now the operator stack
+  while (!operators.empty()) {
+    float rightNum = evaluationStack.top();
+    evaluationStack.pop();
+    float leftNum = evaluationStack.top();
+    evaluationStack.pop();
+
+    evaluationStack.push(
+        operatorsMgr.operate(leftNum, rightNum, operators.top()));
+    operators.pop();
+  }
+
+  std::print("Result {}", evaluationStack.top());
+  return evaluationStack.top();
+}
+
+/**
+ * Transforms the operators between parentheses to terms into the terms vector.
+ *
+ * @param operators The operators stack.
+ * @param terms The terms vector.
+ *
+ * @throws std::invalid_argument If no opening parenthesis is found.
+ */
+void parenthesesToTerm(std::stack<char> &operators,
+                       std::vector<std::string> &terms) {
+  if (operators.empty())
+    throw std::invalid_argument(
+        "Invalid expression: No opening parenthesis found.");
+
+  while (operators.top() != '(') {
+    // Push all the operators to the terms list.
+    terms.push_back(std::string(1, operators.top()));
+    operators.pop();
+  }
+
+  operators.pop();  // Remove the `(`.
 }
 
 /**
@@ -58,111 +81,131 @@ std::expected<float, std::string> evaluateExpression(std::vector<std::string> op
  *
  * @return std::expected<float, std::string>
  * - **Success (`float`)**: The computed result of the expression.
- * - **Error (`std::string`)**: An error message describing the failure reason.
+ * - **Error (`std::string`)**: An error message describing the failure
+ * reason.
  *
  * @retval float The computed result if the expression is valid.
  * @retval std::string An error message if parsing fails.
  */
-std::expected<float, std::string> readExpression(std::string expr, bool debug)
-{
-    int i = 0;
-    OperatorsManager operatorsMgr;
+std::expected<float, std::string> readExpression(std::string expr, bool debug) {
+  int i = 0;
+  OperatorsManager operatorsMgr;
 
-    std::vector<std::string> operands;
-    std::stack<char> operators;
+  std::vector<std::string> terms;
+  std::stack<char> operators;
 
-    std::string storedOperand = "";
-    std::print("Length {}\n", expr.length());
+  std::string storedTerm = "";
+  bool hasAlphanumeric = false;
+  bool hasDotAlready = false;
 
-    // Iterate over the expression
-    for (int i = 0; i < expr.length(); i++)
-    {
-        char currentToken = expr.at(i);
+  // Iterate over the expression
+  for (int i = 0; i < expr.length(); i++) {
+    char currentToken = expr.at(i);
 
-        if (isdigit(currentToken) || currentToken == '.')
-        {
-            storedOperand += currentToken;
-            continue;
-        }
-        else
-        {
-            // TODO: Add try catch
-            // There is another type of token, such as a variable or operator.
-            if (!storedOperand.empty())
-            {
-                operands.push_back(storedOperand);
-                storedOperand = "";
-            }
-        }
+    // Process numbers and variables
+    // abc123
+    // a1
+    // hola
+    // 10.2
 
-        if (operatorsMgr.isValidOperator(currentToken))
-        {
-            // std::print("Before\n");
-            // printPostfixExpression(operators, operands);
+    bool isValidAlphanumeric = (isalnum(currentToken) || currentToken == '.') &&
+                               !operatorsMgr.isValidOperator(currentToken);
 
-            // If the operators stack is empty, we can push the current operator.
-            if (operators.empty())
-            {
-                operators.push(currentToken);
-                continue;
-            }
+    if (isValidAlphanumeric) {
+      if (storedTerm.empty()) {
+        // If the stored term is empty, then the current token should be a
+        // number or a variable.
+        storedTerm += currentToken;
+        continue;
+      }
 
-            // If the operator is a `)`, remove all operators until the `(` is found.
-            if (currentToken == ')')
-            {
-                if (operators.empty())
-                    return std::unexpected("Invalid expression: No opening parenthesis found.");
+      bool storedTermIsNumber = isdigit(storedTerm.at(0));
 
-                while (operators.top() != '(')
-                {
-                    // Push the operator to the operands list. So we process it in a postfix manner.
-                    operands.push_back(std::string(1, operators.top()));
-                    operators.pop();
-                }
+      if (!storedTermIsNumber)
+        // tODO: raise an error if current token is a dot.
 
-                operators.pop(); // Remove the `(`.
-                // operators.pop(); // Remove also the operator after the `(`.
-                continue;
-            }
+        // Stored term doesnt start with a number and current token is not an
+        // operator. Then it should be a variable that accepts both numbers and
+        // letters.
 
-            int currentPrecedence = operatorsMgr.getOperatorPrecedence(currentToken);
-            int stackPrecedence = operatorsMgr.getOperatorPrecedence(operators.top());
+        // Just append the value
+        storedTerm += currentToken;
 
-            if (currentPrecedence >= stackPrecedence && stackPrecedence > 0)
-            {
+      else {  // Is a number
 
-                char lastOperator = operators.top();
-                operators.pop();
+        // Don't accept two dots (.) in a number.
+        if (hasDotAlready && currentToken == '.')
+          throw std::invalid_argument(
+              "Invalid number format: Multiple dots found in number.");
 
-                // This is so we keep operate with this operator, but after the current operator has been operated with.
-                // (not the best explanation, ik.)
+        // Only accept numbers if the stored term starts with a number.
+        if (!isdigit(currentToken) && currentToken != '.')
+          throw std::invalid_argument(
+              "Invalid number format: Non-digit character found in number.");
 
-                operands.push_back(std::string(1, lastOperator));
-                operators.push(currentToken);
-            }
-            else
-                operators.push(currentToken);
+        if (currentToken == '.') hasDotAlready = true;
 
-            // std::print("After\n");
+        storedTerm += currentToken;
+      }
 
-            // printPostfixExpression(operators, operands);
-        }
+      continue;
     }
 
-    // Add last number if it exists
-    if (!storedOperand.empty())
-        operands.push_back(storedOperand);
-
-    // Print operands list and operators stack if running in debug mode.
-    if (debug)
-    {
-        printPostfixExpression(operators, operands);
+    // Current character is an operator. Push the savedTerm to the terms list.
+    if (!storedTerm.empty()) {
+      terms.push_back(storedTerm);
+      storedTerm = "";
+      hasDotAlready = false;
     }
 
-    std::print("Evaluating...");
-    auto r = evaluateExpression(operands, operators);
+    if (!operatorsMgr.isValidOperator(currentToken))
+      throw std::invalid_argument("Invalid operator found: " +
+                                  std::string(1, currentToken));
 
-    // print("Res {}", r);
+    // If the operators stack is empty, or is a `(`, we can push the current
+    // operator.
+    if (operators.empty() || currentToken == '(') {
+      operators.push(currentToken);
+      continue;
+    }
 
-    return 0;
+    // If the operator is a `)`, remove all operators until the `(` is
+    // found. This is because, mathematically speaking an expression in a
+    // parentheses is technically a term written in another way.
+    // (2 + 1)x = 3x.
+
+    if (currentToken == ')') {
+      parenthesesToTerm(operators, terms);
+      continue;
+    }
+
+    // Parse normally the operators.
+    int currentPrecedence = operatorsMgr.getOperatorPrecedence(currentToken);
+    int stackPrecedence = operatorsMgr.getOperatorPrecedence(operators.top());
+
+    if (currentPrecedence <= stackPrecedence) {
+      char lastOperator = operators.top();
+      operators.pop();
+
+      // This is so we keep operate with this operator, but after the
+      // current operator has been operated with. (not the best explanation,
+      // ik.)
+
+      terms.push_back(std::string(1, lastOperator));
+      operators.push(currentToken);
+    } else
+      operators.push(currentToken);
+  }
+
+  // Push the last term if it exists.
+  if (!storedTerm.empty()) terms.push_back(storedTerm);
+
+  // Print operands list and operators stack if running in debug mode.
+  if (debug) printPostfixExpression(operators, terms);
+
+  auto r = evaluateExpression(terms, operators);
+
+  // print("Res {}", r);
+
+  return 0;
 }
