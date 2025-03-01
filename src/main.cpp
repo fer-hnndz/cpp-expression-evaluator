@@ -13,12 +13,14 @@ int main(int argc, char *argv[]) {
   bool debug = false;
 
   std::stack<char> operatorStack;
+  Evaluator ev;
+
   const std::string expr = parseInputs(argc, argv, debug);
 
   if (expr.length() == 0)
     return 0;
 
-  auto a = readExpression(expr, debug);
+  auto a = ev.execute(expr, debug);
   return 0;
 }
 
