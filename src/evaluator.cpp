@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "debug_logs.h"
+#include "evaluator.h"
 #include "operators.h"
 
 std::expected<float, std::string>

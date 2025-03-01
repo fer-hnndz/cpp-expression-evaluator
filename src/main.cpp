@@ -4,7 +4,7 @@
 #include <print>
 #include <string>
 
-#include "evaluator.cpp"
+#include "evaluator.h"
 #include "tags.h"
 
 std::string parseInputs(int argc, char *argv[], bool &debug);
@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   std::stack<char> operatorStack;
   const std::string expr = parseInputs(argc, argv, debug);
 
-  if (sizeof expr == 0)
+  if (expr.length() == 0)
     return 0;
 
   auto a = readExpression(expr, debug);
