@@ -4,7 +4,7 @@
 OperatorsManager::OperatorsManager() {
   operatorsPrecedence['('] = 0;
   operatorsPrecedence[')'] = 0;
-  operatorsPrecedence['^'] = 0;
+  operatorsPrecedence['^'] = 1;
   operatorsPrecedence['*'] = 2;
   operatorsPrecedence['/'] = 2;
   operatorsPrecedence['%'] = 2;
@@ -12,13 +12,9 @@ OperatorsManager::OperatorsManager() {
   operatorsPrecedence['-'] = 3;
 }
 
-short OperatorsManager::getOperatorPrecedence(char op) {
-  return operatorsPrecedence[op];
-}
+short OperatorsManager::getOperatorPrecedence(char op) { return operatorsPrecedence[op]; }
 
-bool OperatorsManager::isValidOperator(char op) {
-  return operatorsPrecedence.find(op) != operatorsPrecedence.end();
-}
+bool OperatorsManager::isValidOperator(char op) { return operatorsPrecedence.find(op) != operatorsPrecedence.end(); }
 
 float OperatorsManager::operate(float left, float right, char op) {
   switch (op) {
@@ -35,7 +31,6 @@ float OperatorsManager::operate(float left, float right, char op) {
   case '^':
     return pow(left, right);
   default:
-    throw std::invalid_argument("Invalid operator found: " +
-                                std::string(1, op));
+    throw std::invalid_argument("Invalid operator found: " + std::string(1, op));
   }
 }

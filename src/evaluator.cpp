@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 #include <print>
 #include <stack>
 #include <stdexcept>
@@ -75,7 +76,7 @@ void Evaluator::parenthesesToTerm() {
   while (operators.size() > 0) {
     if (operators.top() == '(') {
       operators.pop(); // Remove the `(`.
-      break;
+      return;
     }
 
     // Push all the operators to the terms list.
@@ -178,7 +179,8 @@ void Evaluator::handleOperator(char op) {
   if (!mgr.isValidOperator(op))
     throw std::invalid_argument("Invalid operator found: " + std::string(1, op));
 
-  if (operators.empty() || op == '(') {
+  // Avoid closing parentheses to allow for operations like 10 + (1) = 11.
+  if ((operators.empty() || op == '(' || operators.top() == '(') && op != ')') {
     operators.push(op);
     return;
   }
@@ -192,12 +194,13 @@ void Evaluator::handleOperator(char op) {
   int currentPrecedence = mgr.getOperatorPrecedence(op);
   int stackPrecedence = mgr.getOperatorPrecedence(operators.top());
 
-  if (currentPrecedence >= stackPrecedence && stackPrecedence > 0) {
+  if (currentPrecedence >= stackPrecedence) {
     char lastOperator = operators.top();
-    operators.pop();
 
+    operators.pop();
     terms.push_back(std::string(1, lastOperator));
     operators.push(op);
+
   } else
     operators.push(op);
 }
@@ -231,6 +234,7 @@ std::expected<float, std::string> Evaluator::readExpression() {
  */
 std::expected<float, std::string> Evaluator::evaluateExpression() {
   std::stack<float> evaluationStack;
+  std::map<std::string, float> variables;
 
   // Add numbers to the evaluation stack until an operator in the operands is
   // found.
@@ -241,23 +245,37 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
     bool isTerm = !mgr.isValidOperator(currentTerm.at(0)) && (isalpha(currentTerm.at(0)) || isdigit(currentTerm.at(0)));
 
     if (isTerm) {
+
+      // Check if its a digit
       if (isdigit(currentTerm.at(0))) {
         evaluationStack.push(std::stof(currentTerm));
         continue;
       }
 
-      // Ask for the value of the variable.
-      std::print("Enter the value of the variable {}: ", currentTerm);
-      float *value = new float;
-      std::cin >> *value;
+      // Ask for the value of the variable if not found
+      if (variables.find(currentTerm) == variables.end()) {
+        std::print("Enter the value of the variable `{}`: ", currentTerm);
+        std::string val = "";
+        std::cin >> val;
 
-      evaluationStack.push(*value);
-      delete value;
+        try {
+          variables[currentTerm] = std::stof(val);
+        } catch (std::exception &e) {
+
+          // Show a custom message
+          throw std::runtime_error("Cannot map `float` value " + val + " to term `" + currentTerm + "`.");
+        }
+      }
+
+      evaluationStack.push(variables[currentTerm]);
       continue;
     }
 
     // Here we have detected an operation in the terms stack.
     // Possibly from a parentheses term.
+
+    if (evaluationStack.size() < 2)
+      throw std::invalid_argument("Invalid expression: Not enough terms to operate.");
 
     float rightNum = evaluationStack.top();
     evaluationStack.pop();
@@ -271,6 +289,13 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
   // Finished iterating over the operands (so we process any operator located
   // there) Process now the operator stack
   while (!operators.empty()) {
+
+    if (operators.top() == '(')
+      throw std::invalid_argument("Invalid expression: No closing parenthesis found.");
+
+    if (evaluationStack.size() < 2)
+      throw std::invalid_argument("Invalid expression: Not enough terms to operate.");
+
     float rightNum = evaluationStack.top();
     evaluationStack.pop();
     float leftNum = evaluationStack.top();
