@@ -45,7 +45,8 @@ void ConfigParser::parse(std::string path) {
       throw std::format_error("Duplicate constant in config file: " + key);
 
     try {
-      std::print("Attempting to set constant {} to {}\n", key, value);
+      // std::print("Attempting to set constant {} to {}\n", key, value);
+
       this->constants[key] = std::stof(value);
 
     } catch (std::exception &e) {
@@ -62,7 +63,7 @@ void ConfigParser::parse(std::string path) {
 void ConfigParser::loadConfig() {
   std::filesystem::path configPath = std::filesystem::current_path() / "config.cee";
 
-  std::print("Looking for config file at: {}\n", configPath.string());
+  // std::print("Looking for config file at: {}\n", configPath.string());
 
   if (!std::filesystem::exists(configPath))
     return;
