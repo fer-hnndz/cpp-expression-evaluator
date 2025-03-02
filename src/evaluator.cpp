@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "configparser.h"
 #include "evaluator.h"
 
 /**
@@ -53,11 +54,25 @@ void Evaluator::printPostfixExpression(std::stack<char> operators, const std::ve
   std::print("\n---\n");
 }
 
+/*
+  ============
+  Constructors
+  ============
+*/
+
+/**
+ * Creates a new Evaluator object.
+ *
+ * @param constants (`ConfigParser`) The constants to use in the evaluation.
+ */
+Evaluator::Evaluator(ConfigParser *constants) { this->constants = constants; };
+
 /**
  * Creates a new Evaluator object.
  */
+Evaluator::Evaluator() { this->constants = nullptr; };
 
-Evaluator::Evaluator() {};
+Evaluator::~Evaluator() {};
 
 /*
   =================
@@ -252,7 +267,16 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
         continue;
       }
 
-      // Ask for the value of the variable if not found
+      // Check if it's a constant defined in the setting
+
+      if (constants != nullptr && constants->get(currentTerm) != nullptr) {
+        float *val = constants->get(currentTerm);
+        evaluationStack.push(*val);
+
+        continue;
+      }
+
+      // Ask for the value of the variable if it's not in the variables map.
       if (variables.find(currentTerm) == variables.end()) {
         std::print("Enter the value of the variable `{}`: ", currentTerm);
         std::string val = "";

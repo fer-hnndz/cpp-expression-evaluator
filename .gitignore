@@ -1,3 +1,6 @@
 *.out
 operate
 .vscode
+
+# Project's config file. Ignored for testing
+config.cee

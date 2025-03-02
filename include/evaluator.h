@@ -1,6 +1,7 @@
 #ifndef EVALUATOR_H
 #define EVALUATOR_H
 
+#include "configparser.h"
 #include "operators.h"
 #include <expected>
 #include <stack>
@@ -10,6 +11,8 @@
 class Evaluator {
 private:
   OperatorsManager mgr;
+  ConfigParser *constants;
+
   std::string termBuffer;
   std::vector<std::string> terms;
   std::stack<char> operators;
@@ -36,6 +39,8 @@ private:
 
 public:
   Evaluator();
+  Evaluator(ConfigParser *constants);
+  ~Evaluator();
 
   float execute(std::string expression, bool debug);
 };
