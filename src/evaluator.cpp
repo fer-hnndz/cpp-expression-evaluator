@@ -146,6 +146,9 @@ void Evaluator::iterateTokens() {
       if (!termIsNumber) {
         // A variable can have any alphanumeric on it. Just append it.
 
+        if (currentToken == '.')
+          throw std::invalid_argument("A variable cannot have a dot (.) in its name");
+
         termBuffer += currentToken;
         continue;
       }
@@ -328,6 +331,9 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
     evaluationStack.push(mgr.operate(leftNum, rightNum, operators.top()));
     operators.pop();
   }
+
+  if (evaluationStack.size() != 1)
+    throw std::invalid_argument("Not enough operators to process all terms.");
 
   float res = evaluationStack.top();
   std::print("Result {}", res);
