@@ -7,13 +7,24 @@
 #include "evaluator.h"
 #include "tags.h"
 
-std::string parseInputs(int argc, char *argv[], bool &debug, std::string &configPath);
+std::expected<std::string, float> parseInputs(int argc, char *argv[], bool &debug, std::string &configPath);
 
 int main(int argc, char *argv[]) {
   bool debug = false;
 
   std::string configPath = "";
-  const std::string expr = parseInputs(argc, argv, debug, configPath);
+  const std::expected<std::string, float> parseResult = parseInputs(argc, argv, debug, configPath);
+
+  if (!parseResult.has_value())
+    if (parseResult.error() == -1) {
+      std::print("Please make sure to use all options correctly.");
+      std::print(HELP_MESSAGE);
+      std::print("\n");
+
+      return -1;
+    }
+
+  const std::string expr = parseResult.value();
 
   ConfigParser config;
   Evaluator *ev = nullptr;
@@ -24,11 +35,7 @@ int main(int argc, char *argv[]) {
     config.loadConfig(configPath);
 
   ev = new Evaluator(&config);
-
-  if (expr.length() == 0)
-    return 0;
-
-  auto a = ev->execute(expr, debug);
+  float a = ev->execute(expr, debug);
 
   delete ev;
   return 0;
@@ -38,12 +45,12 @@ int main(int argc, char *argv[]) {
  * Parses the CLI inputs and returns the expression the user inputted.
  * Prints the help menu if --help tag is specified.
  */
-std::string parseInputs(int argc, char *argv[], bool &debug, std::string &configPath) {
+std::expected<std::string, float> parseInputs(int argc, char *argv[], bool &debug, std::string &configPath) {
   // Check if user has enough arguments
   if (argc < 2) {
     std::print(HELP_MESSAGE);
     std::print("\n");
-    return "";
+    return std::unexpected(-1);
   }
 
   const std::string expr = argv[1];
@@ -51,7 +58,7 @@ std::string parseInputs(int argc, char *argv[], bool &debug, std::string &config
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == HELP_TAG) {
       std::cout << HELP_MESSAGE;
-      return "";
+      return std::unexpected(0);
     }
 
     if (std::string(argv[i]) == "--debug")
@@ -59,13 +66,12 @@ std::string parseInputs(int argc, char *argv[], bool &debug, std::string &config
 
     if (std::string(argv[i]) == "--help") {
       std::cout << HELP_MESSAGE;
-      return "";
+      return std::unexpected(0);
     }
 
     if (std::string(argv[i]) == "--config") {
       if (i == argc - 1) {
-        std::invalid_argument("No config file path specified.");
-        return "";
+        return std::unexpected(-1);
       }
 
       configPath = argv[i + 1];
