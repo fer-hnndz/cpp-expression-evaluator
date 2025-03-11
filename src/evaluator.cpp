@@ -7,6 +7,7 @@
 
 #include "configparser.h"
 #include "evaluator.h"
+#include <stdfloat>
 
 /**
  * ===========================
@@ -251,7 +252,7 @@ std::expected<float, std::string> Evaluator::readExpression() {
  * Asks for any variable value if needed.
  */
 std::expected<float, std::string> Evaluator::evaluateExpression() {
-  std::stack<float> evaluationStack;
+  std::stack<std::float128_t> evaluationStack;
   std::map<std::string, float> variables;
 
   // Add numbers to the evaluation stack until an operator in the operands is
@@ -266,7 +267,7 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
 
       // Check if its a digit
       if (isdigit(currentTerm.at(0))) {
-        evaluationStack.push(std::stof(currentTerm));
+        evaluationStack.push(static_cast<std::float128_t>(std::stof(currentTerm)));
         continue;
       }
 
@@ -274,7 +275,7 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
 
       if (constants != nullptr && constants->get(currentTerm) != nullptr) {
         float *val = constants->get(currentTerm);
-        evaluationStack.push(*val);
+        evaluationStack.push(static_cast<std::float128_t>(*val));
 
         continue;
       }
@@ -294,7 +295,7 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
         }
       }
 
-      evaluationStack.push(variables[currentTerm]);
+      evaluationStack.push(static_cast<std::float128_t>(variables[currentTerm]));
       continue;
     }
 
@@ -304,12 +305,12 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
     if (evaluationStack.size() < 2)
       throw std::invalid_argument("Invalid expression: Not enough terms to operate.");
 
-    float rightNum = evaluationStack.top();
+    std::float128_t rightNum = evaluationStack.top();
     evaluationStack.pop();
-    float leftNum = evaluationStack.top();
+    std::float128_t leftNum = evaluationStack.top();
     evaluationStack.pop();
 
-    float result = mgr.operate(leftNum, rightNum, currentTerm.at(0));
+    std::float128_t result = mgr.operate(static_cast<float>(leftNum), static_cast<float>(rightNum), currentTerm.at(0));
     evaluationStack.push(result);
   }
 
@@ -323,23 +324,23 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
     if (evaluationStack.size() < 2)
       throw std::invalid_argument("Invalid expression: Not enough terms to operate.");
 
-    float rightNum = evaluationStack.top();
+    std::float128_t rightNum = evaluationStack.top();
     evaluationStack.pop();
-    float leftNum = evaluationStack.top();
+    std::float128_t leftNum = evaluationStack.top();
     evaluationStack.pop();
 
-    evaluationStack.push(mgr.operate(leftNum, rightNum, operators.top()));
+    evaluationStack.push(mgr.operate(static_cast<float>(leftNum), static_cast<float>(rightNum), operators.top()));
     operators.pop();
   }
 
   if (evaluationStack.size() != 1)
     throw std::invalid_argument("Not enough operators to process all terms.");
 
-  float res = evaluationStack.top();
+  std::float128_t res = evaluationStack.top();
   std::print("Result {}", res);
 
   // TODO:  Empty data structures
-  return res;
+  return static_cast<float>(res);
 }
 
 /*
