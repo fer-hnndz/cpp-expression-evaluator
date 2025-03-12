@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   ev = new Evaluator(&config);
   double a = ev->execute(expr, debug);
 
-  std::print("Result recieved on main: {}", a);
+  std::print("Result: {}\n", a);
 
   delete ev;
   return 0;

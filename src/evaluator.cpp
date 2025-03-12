@@ -335,7 +335,7 @@ float Evaluator::evaluateExpression() {
     throw std::invalid_argument("Not enough operators to process all terms.");
 
   std::float128_t res = evaluationStack.top();
-  std::print("Result {}", res);
+  // std::print("Result {}", res);
 
   // TODO:  Empty data structures
   return static_cast<float>(res);
