@@ -5,6 +5,7 @@
 #include "operators.h"
 #include <expected>
 #include <stack>
+#include <stdfloat>
 #include <string>
 #include <vector>
 
@@ -21,10 +22,10 @@ private:
   bool debug = false;
 
   // Entry point to the parsing and debug printing
-  std::expected<float, std::string> readExpression();
+  float readExpression();
 
   // Asks for variable's values and executes the operations.
-  std::expected<float, std::string> evaluateExpression();
+  float evaluateExpression();
 
   // Parsing functions
   void iterateTokens();
@@ -40,7 +41,7 @@ private:
 public:
   Evaluator();
   Evaluator(ConfigParser *constants);
-  ~Evaluator();
+  //~Evaluator();
 
   float execute(std::string expression, bool debug);
 };

@@ -73,7 +73,7 @@ Evaluator::Evaluator(ConfigParser *constants) { this->constants = constants; };
  */
 Evaluator::Evaluator() { this->constants = nullptr; };
 
-Evaluator::~Evaluator() {};
+// Evaluator::~Evaluator() {};
 
 /*
   =================
@@ -235,15 +235,13 @@ void Evaluator::handleOperator(char op) {
  * Calls `iterateTokens` to populate the stacks, prints debug output if `debug`
  * is set to `true` and evaluates the expression.
  */
-std::expected<float, std::string> Evaluator::readExpression() {
-  bool hasDotAlready = false;
+float Evaluator::readExpression() {
   iterateTokens();
 
   if (debug)
     printPostfixExpression(operators, terms);
 
-  auto r = evaluateExpression();
-  return 0;
+  return evaluateExpression();
   ;
 }
 
@@ -251,7 +249,7 @@ std::expected<float, std::string> Evaluator::readExpression() {
  * Iterates over the terms and operators data structures and operates the terms.
  * Asks for any variable value if needed.
  */
-std::expected<float, std::string> Evaluator::evaluateExpression() {
+float Evaluator::evaluateExpression() {
   std::stack<std::float128_t> evaluationStack;
   std::map<std::string, float> variables;
 
@@ -282,7 +280,7 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
 
       // Ask for the value of the variable if it's not in the variables map.
       if (variables.find(currentTerm) == variables.end()) {
-        std::print("Enter the value of the variable `{}`: ", currentTerm);
+        std::print("Enter the value of the variable {}: ", currentTerm);
         std::string val = "";
         std::cin >> val;
 
@@ -291,7 +289,7 @@ std::expected<float, std::string> Evaluator::evaluateExpression() {
         } catch (std::exception &e) {
 
           // Show a custom message
-          throw std::runtime_error("Cannot map `float` value " + val + " to term `" + currentTerm + "`.");
+          throw std::runtime_error("Cannot map float value " + val + " to term " + currentTerm + ".");
         }
       }
 
@@ -359,8 +357,5 @@ float Evaluator::execute(std::string expression, bool debug) {
   this->expression = expression;
   this->debug = debug;
 
-  readExpression();
-
-  // Todo: RETURN the actual result.
-  return 0;
+  return readExpression();
 }

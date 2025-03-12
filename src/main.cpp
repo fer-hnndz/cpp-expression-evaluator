@@ -35,7 +35,9 @@ int main(int argc, char *argv[]) {
     config.loadConfig(configPath);
 
   ev = new Evaluator(&config);
-  float a = ev->execute(expr, debug);
+  double a = ev->execute(expr, debug);
+
+  std::print("Result recieved on main: {}", a);
 
   delete ev;
   return 0;
