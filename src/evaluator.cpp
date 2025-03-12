@@ -337,7 +337,10 @@ float Evaluator::evaluateExpression() {
   std::float128_t res = evaluationStack.top();
   // std::print("Result {}", res);
 
-  // TODO:  Empty data structures
+  // Empty data structures
+  terms.clear();
+  operators = std::stack<char>();
+
   return static_cast<float>(res);
 }
 
