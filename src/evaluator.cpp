@@ -124,8 +124,8 @@ void Evaluator::iterateTokens() {
   std::string termBuffer = "";
   bool hasDotAlready = false;
 
-  for (int i = 0; i < expression.length(); i++) {
-    char currentToken = expression.at(i);
+  for (using C = char; C currentToken : expression) {
+    // char currentToken = expression.at(i);
 
     if (currentToken == ' ') {
       hasDotAlready = false;
