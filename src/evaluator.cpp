@@ -308,6 +308,11 @@ float Evaluator::evaluateExpression() {
     std::float128_t leftNum = evaluationStack.top();
     evaluationStack.pop();
 
+    bool isDivisionByZero = currentTerm.at(0) == '/' && rightNum == 0;
+
+    if (isDivisionByZero)
+      throw std::invalid_argument("Division by zero is not allowed.");
+
     std::float128_t result = mgr.operate(static_cast<float>(leftNum), static_cast<float>(rightNum), currentTerm.at(0));
     evaluationStack.push(result);
   }
@@ -326,6 +331,11 @@ float Evaluator::evaluateExpression() {
     evaluationStack.pop();
     std::float128_t leftNum = evaluationStack.top();
     evaluationStack.pop();
+
+    bool isDivisionByZero = operators.top() == '/' && rightNum == 0;
+
+    if (isDivisionByZero)
+      throw std::invalid_argument("Division by zero is not allowed.");
 
     evaluationStack.push(mgr.operate(static_cast<float>(leftNum), static_cast<float>(rightNum), operators.top()));
     operators.pop();
